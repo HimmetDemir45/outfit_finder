@@ -14,19 +14,24 @@ class StyleTagSerializer(serializers.ModelSerializer):
 class ItemLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemLink
-        fields = ['id', 'clothing_item', 'store_name', 'url', 'price', 'is_affiliate', 'last_updated']
+        fields = '__all__'
 
 class ClothingItemSerializer(serializers.ModelSerializer):
-    # Bir kıyafeti çektiğimizde, altındaki mağaza linklerini de JSON içinde otomatik görebilmek için:
-    links = ItemLinkSerializer(many=True, read_only=True)
-    category_name = serializers.ReadOnlyField(source='category.name')
+    # Fiyatları sıralamak için alanımızı dinamik bir metoda çeviriyoruz
+    links = serializers.SerializerMethodField()
 
     class Meta:
         model = ClothingItem
-        fields = ['id', 'name', 'category', 'category_name', 'image', 'tags', 'links', 'added_by', 'created_at']
-        # Güvenlik önlemi: Kimin eklediğini dışarıdan gelen veriye güvenerek değil,
-        # doğrudan giriş yapmış kullanıcının token/oturum bilgisinden alacağız.
-        read_only_fields = ['added_by']
+        # Senin modelinden aldığımız tüm alanlar ve güvenliği sağlayan 'creator' alanı
+        fields = ['id', 'name', 'category', 'image', 'tags', 'links', 'creator']
+
+    def get_links(self, obj):
+        # Modelinde related_name='links' yazdığın için burada obj.links kullanıyoruz
+        # Fiyatları ucuzdan pahalıya sırala
+        ordered_links = obj.links.all().order_by('price')
+
+        # Sıralı veriyi dönüştür ve JSON'a ekle
+        return ItemLinkSerializer(ordered_links, many=True).data
 
 class OutfitSerializer(serializers.ModelSerializer):
     # Kombinleri çekerken, içindeki kıyafetlerin sadece ID'sini değil, tüm detaylarını getirmesi için:

@@ -28,7 +28,7 @@ class ClothingItem(models.Model):
     tags = models.ManyToManyField(StyleTag, blank=True, related_name='clothes')
 
     # İleride kullanıcılar eklediğinde kimin eklediğini bilmek için
-    added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -41,6 +41,7 @@ class ItemLink(models.Model):
     url = models.URLField(max_length=500, verbose_name="Ürün Linki")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Fiyat")
     is_affiliate = models.BooleanField(default=True, verbose_name="Affiliate Linki mi?")
+    last_checked_at = models.DateTimeField(null=True, blank=True)# Fiyatın en son kontrol edildiği veya güncellendiği tarih
 
     # İleride bot (scraper) yazdığımızda bu alanı otomatik güncelleyeceğiz
     last_updated = models.DateTimeField(auto_now=True, verbose_name="Son Fiyat Güncellemesi")
